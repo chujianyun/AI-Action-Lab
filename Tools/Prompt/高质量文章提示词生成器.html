@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高质量文章创作提示词生成器</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+        .subtitle a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .subtitle a:hover {
+            text-decoration: underline;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        .file-input {
+            margin-bottom: 10px;
+        }
+        .file-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        .delete-file {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 3px 8px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .delete-file:hover {
+            background-color: #c0392b;
+        }
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .copy-btn {
+            background-color: #2ecc71;
+            margin-top: 10px;
+        }
+        .copy-btn:hover {
+            background-color: #27ae60;
+        }
+        .help-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #3498db;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        .help-icon:hover {
+            background-color: #2980b9;
+            transform: scale(1.05);
+        }
+        /* 弹窗样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            padding: 0;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalFadeIn 0.3s;
+        }
+        @keyframes modalFadeIn {
+            from {opacity: 0; transform: translateY(-20px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+        .modal-header {
+            background-color: #3498db;
+            color: white;
+            padding: 15px 20px;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .close-modal {
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            line-height: 1;
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        .help-section {
+            margin-bottom: 20px;
+        }
+        .help-section-title {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        .help-list {
+            padding-left: 20px;
+        }
+        .help-list li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        #generatedPrompt {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success-message {
+            color: #2ecc71;
+            margin-top: 5px;
+            font-size: 14px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>高质量文章创作提示词生成器</h1>
+        <div class="subtitle">by <a href="https://t.zsxq.com/PuUHe" target="_blank">明明如月学长</a></div>
+        
+        <div class="form-group">
+            <label for="title">标题：<span style="color: #e74c3c;">*</span></label>
+            <input type="text" id="title" placeholder="请输入标题（必填）" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="concepts">想法：</label>
+            <textarea id="concepts" placeholder="在这里写入你的观点和想法，加入个性化的想法会让效果更好（可选）"></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="outline">大纲：</label>
+            <textarea id="outline" placeholder="在这里输入文章大纲（可选）"></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="tone">风格：</label>
+            <input type="text" id="tone" placeholder="请输入创作的语言风格，如口语化（可选）">
+        </div>
+        
+        <div class="form-group">
+            <label>参考资料：</label>
+            <div class="file-input">
+                <input type="file" id="references" accept=".md,.txt" multiple>
+            </div>
+            <div id="fileInfo"></div>
+            <div id="fileList"></div>
+        </div>
+        
+        <div class="form-group">
+            <label for="customPrompt">自定义提示词：</label>
+            <input type="text" id="customPrompt" placeholder="输入自定义提示词（可选）">
+        </div>
+        
+        <div class="form-group">
+            <button id="generateBtn" class="btn">生成提示词</button>
+        </div>
+        
+        <div class="form-group">
+            <label>拼接后的提示词：</label>
+            <div id="generatedPrompt"></div>
+            <button id="copyBtn" class="btn copy-btn">复制提示词</button>
+            <div id="copySuccess" class="success-message">复制成功！</div>
+        </div>
+    </div>
+
+    <!-- 帮助图标 -->
+    <div class="help-icon" id="helpIcon">?</div>
+    
+    <!-- 帮助弹窗 -->
+    <div class="modal" id="helpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">使用帮助</h2>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="help-section">
+                    <div class="help-section-title">使用方法：</div>
+                    <p>填写完信息以后，生成提示词，粘贴即可使用。</p>
+                    <p>通常提供的信息越详细，模型创作的效果越好。</p>
+                </div>
+                
+                <div class="help-section">
+                    <div class="help-section-title">使用提醒：</div>
+                    <ol class="help-list">
+                        <li>提供场景有助于大模型更好地创作</li>
+                        <li>想要生成出言之有物的文章，需要在 "想法" 中给出自己的核心观点和思考，以便大模型可以参考你的观点进行创作</li>
+                        <li>给出创作大纲更有助于让大模型按照你的思路来创作</li>
+                        <li>风格特别重要，大家可以根据自己的喜好加入创作的风格，比如"偏口语化"、"偏书面"</li>
+                        <li>可以选择多篇参考资料，但是参考资料过多会消耗更多 Token</li>
+                        <li>你可以自定义提示词，让模型按照你的要求进行创作</li>
+                    </ol>
+                </div>
+                
+                <div class="help-section">
+                    <p style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #3498db; border-radius: 4px;">
+                        想要学习更多提示词技巧欢迎关注掘金小册：
+                        <a href="https://s.juejin.cn/ds/i5yXG1n6/" target="_blank" style="font-weight: bold; color: #3498db; text-decoration: none;">
+                            《系统掌握大语言模型提示词 - 从理论到实践》
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const titleInput = document.getElementById('title');
+            const conceptsInput = document.getElementById('concepts');
+            const outlineInput = document.getElementById('outline');
+            const toneInput = document.getElementById('tone');
+            const referencesInput = document.getElementById('references');
+            const customPromptInput = document.getElementById('customPrompt');
+            const generateBtn = document.getElementById('generateBtn');
+            const promptOutput = document.getElementById('generatedPrompt');
+            const copyBtn = document.getElementById('copyBtn');
+            const copySuccess = document.getElementById('copySuccess');
+            const fileInfo = document.getElementById('fileInfo');
+            
+            // 帮助弹窗相关
+            const helpIcon = document.getElementById('helpIcon');
+            const helpModal = document.getElementById('helpModal');
+            const closeModal = document.getElementById('closeModal');
+            
+            // 打开帮助弹窗
+            helpIcon.addEventListener('click', function() {
+                helpModal.style.display = 'flex';
+            });
+            
+            // 关闭帮助弹窗
+            closeModal.addEventListener('click', function() {
+                helpModal.style.display = 'none';
+            });
+            
+            // 点击弹窗外部关闭弹窗
+            window.addEventListener('click', function(e) {
+                if (e.target === helpModal) {
+                    helpModal.style.display = 'none';
+                }
+            });
+            
+            let referenceFiles = [];
+            let fileCounter = 0;
+            
+            // 处理文件上传
+            referencesInput.addEventListener('change', function(e) {
+                const files = e.target.files;
+                if (!files.length) return;
+                
+                const fileListEl = document.getElementById('fileList');
+                
+                // 处理新添加的文件
+                for (let i = 0; i < files.length; i++) {
+                    const currentFile = files[i];
+                    fileCounter++;
+                    
+                    // 创建文件列表项
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-list-item';
+                    fileItem.dataset.fileId = fileCounter;
+                    
+                    const fileName = document.createElement('span');
+                    fileName.textContent = currentFile.name;
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-file';
+                    deleteBtn.textContent = '删除';
+                    deleteBtn.onclick = function() {
+                        // 从数组和显示中移除此文件
+                        const fileId = parseInt(fileItem.dataset.fileId);
+                        referenceFiles = referenceFiles.filter(file => file.id !== fileId);
+                        fileItem.remove();
+                        updateFileInfo();
+                    };
+                    
+                    fileItem.appendChild(fileName);
+                    fileItem.appendChild(deleteBtn);
+                    fileListEl.appendChild(fileItem);
+                    
+                    // 读取文件内容
+                    const reader = new FileReader();
+                    reader.onload = (function(file, fileId) {
+                        return function(e) {
+                            referenceFiles.push({
+                                id: fileId,
+                                name: file.name,
+                                content: e.target.result
+                            });
+                            updateFileInfo();
+                        };
+                    })(currentFile, fileCounter);
+                    reader.readAsText(currentFile);
+                }
+                
+                // 重置文件输入框，允许再次选择相同文件
+                referencesInput.value = '';
+            });
+            
+            // 更新文件信息显示
+            function updateFileInfo() {
+                if (referenceFiles.length > 0) {
+                    fileInfo.textContent = `已选择 ${referenceFiles.length} 个文件`;
+                } else {
+                    fileInfo.textContent = '';
+                }
+            }
+            
+            // 生成提示词
+            generateBtn.addEventListener('click', function() {
+                const title = titleInput.value.trim();
+                
+                // 验证必填字段
+                if (!title) {
+                    alert('请填写标题字段！');
+                    titleInput.focus();
+                    return;
+                }
+                
+                const concepts = conceptsInput.value.trim();
+                const outline = outlineInput.value.trim();
+                const tone = toneInput.value.trim();
+                const customPrompt = customPromptInput.value.trim();
+                
+                let prompt = `<title>${title}</title>\n`;
+                prompt += `<creative-concepts>\n${concepts}\n</creative-concepts>\n`;
+                
+                // 添加大纲标签
+                if (outline) {
+                    prompt += `<outline>\n${outline}\n</outline>\n`;
+                }
+                
+                // 添加 tone 标签
+                if (tone) {
+                    prompt += `<tone>${tone}</tone>\n`;
+                } else {
+                    prompt += `<tone></tone>\n`;
+                }
+                
+                prompt += `<references>\n`;
+                if (referenceFiles.length > 0) {
+                    // 为每个文件分配连续的索引
+                    for (let i = 0; i < referenceFiles.length; i++) {
+                        const file = referenceFiles[i];
+                        prompt += `   <reference index="${i+1}" name="${file.name}">${file.content}</reference>\n`;
+                    }
+                }
+                prompt += `</references>\n`;
+                
+                prompt += `<user_instructions>\n`;
+                if (customPrompt) {
+                    prompt += customPrompt;
+                } else {
+                    prompt += `请根据上述信息进行文章创作`;
+                }
+                prompt += `\n</user_instructions>`;
+                
+                promptOutput.textContent = prompt;
+            });
+            
+            // 复制功能
+            copyBtn.addEventListener('click', function() {
+                if (promptOutput.textContent) {
+                    navigator.clipboard.writeText(promptOutput.textContent)
+                        .then(() => {
+                            copySuccess.style.display = 'block';
+                            setTimeout(() => {
+                                copySuccess.style.display = 'none';
+                            }, 2000);
+                        })
+                        .catch(err => {
+                            console.error('复制失败:', err);
+                        });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
